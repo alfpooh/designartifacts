@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>관심 분야 선택 · Orbit Motion</title>
+
+<!-- Pretendard fallback (loads reliably; used if Paperlogy is unavailable) -->
+<link rel="stylesheet" as="style" crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css" />
+
+<style>
+  /* ---- Paperlogy (the font used in the Figma design) ---- */
+  @font-face {
+    font-family: 'Paperlogy'; font-style: normal; font-weight: 500; font-display: swap;
+    src: url('https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy-5Medium.ttf') format('truetype');
+  }
+  @font-face {
+    font-family: 'Paperlogy'; font-style: normal; font-weight: 700; font-display: swap;
+    src: url('https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy-7Bold.ttf') format('truetype');
+  }
+  @font-face {
+    font-family: 'Paperlogy'; font-style: normal; font-weight: 800; font-display: swap;
+    src: url('https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy-8ExtraBold.ttf') format('truetype');
+  }
+
+  /* ---- Registered custom properties so transforms/lengths interpolate smoothly ---- */
+  @property --gap { syntax: '<length>'; initial-value: -10px; inherits: true; }
+  @property --r   { syntax: '<angle>';  initial-value: 0deg;   inherits: false; }
+
+  :root {
+    --font: 'Paperlogy', 'Pretendard Variable', 'Pretendard',
+            'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif;
+    --bg-screen: #f8f9fa;
+    --ink: #1a1a1a;
+    --muted: #7d828a;
+    --accent: #6083f5;
+    --lime: #e6f997;
+    --card-border: #ebecef;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background:
+      radial-gradient(1200px 800px at 50% -10%, #eef1f6 0%, #dfe3ea 55%, #d3d8e0 100%);
+    font-family: var(--font);
+  }
+
+  /* ---- Phone frame ---- */
+  .phone {
+    position: relative;
+    width: 393px;
+    height: 852px;
+    background: var(--bg-screen);
+    border-radius: 40px;
+    overflow: hidden;
+    box-shadow:
+      0 2px 6px rgba(0,0,0,.08),
+      0 30px 60px -20px rgba(23,32,64,.35),
+      0 0 0 1px rgba(0,0,0,.03);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ---- Status bar (kept empty, matching the design node) ---- */
+  .status-bar { position: absolute; top: 0; left: 0; right: 0; height: 44px; }
+
+  /* ---- Header ---- */
+  .header {
+    position: absolute; top: 44px; left: 0; right: 0; height: 48px;
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+  }
+  .chevron { width: 24px; height: 24px; flex: 0 0 24px; display: block; color: var(--ink); }
+  .header .title {
+    font-weight: 800; font-size: 20px; color: var(--ink);
+    white-space: nowrap; word-break: break-word;
+  }
+
+  /* ---- Sub-header ---- */
+  .sub-header {
+    position: absolute; top: 92px; left: 0; right: 0;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+    padding: 0 16px 16px;
+  }
+  .sub-header .desc { font-weight: 500; font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .sub-header .link {
+    font-weight: 700; font-size: 14px; color: var(--accent);
+    text-decoration: none; white-space: nowrap; cursor: pointer;
+  }
+
+  /* ---- Animated card stack ---- */
+  .card-stack {
+    position: absolute; top: 143px; left: 0; right: 0;
+    display: flex; flex-direction: column; align-items: stretch;
+    padding: 4px 16px 0;
+    animation: stackIn 2s linear infinite;
+  }
+  .card-slot { display: flex; align-items: center; justify-content: center; }
+  .card-slot + .card-slot { margin-top: var(--gap); }
+
+  .card {
+    width: 360px; height: 110px;
+    background: #fff;
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,.06));
+    transform-origin: center;
+    transform: rotate(var(--r, 0deg));
+    animation: cardFade 2s linear infinite;
+  }
+  .card-tag {
+    display: inline-flex; align-items: center;
+    padding: 4px 8px; border-radius: 12px;
+  }
+  .card-tag span { font-weight: 800; font-size: 11px; color: #fff; white-space: nowrap; word-break: break-word; }
+  .headline {
+    width: 100%;
+    font-weight: 700; font-size: 16px; color: var(--ink);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .highlight { width: 100%; height: 4px; border-radius: 12px; background: rgba(230,249,151,.5); }
+
+  /* Tag colors + resting rotations (design's static tilt) */
+  .c1 { --r: -1deg;   } .c1 .card-tag { background: var(--accent); }
+  .c2 { --r: 1.5deg;  } .c2 .card-tag { background: var(--lime); }
+  .c3 { --r: -2deg;   } .c3 .card-tag { background: var(--lime); }
+  .c4 { --r: 1deg;    } .c4 .card-tag { background: var(--accent); }
+  .c5 { --r: -1.5deg; } .c5 .card-tag { background: var(--lime); }
+  .c6 { --r: 2deg;    } .c6 .card-tag { background: var(--accent); }
+
+  /* Per-card rotate tracks (absolute values from Figma motion export) */
+  .c1 { animation: cardFade 2s linear infinite, r1 2s linear infinite; }
+  .c2 { animation: cardFade 2s linear infinite, r2 2s linear infinite; }
+  .c3 { animation: cardFade 2s linear infinite, r3 2s linear infinite; }
+  .c4 { animation: cardFade 2s linear infinite, r4 2s linear infinite; }
+  .c5 { animation: cardFade 2s linear infinite, r5 2s linear infinite; }
+  .c6 { animation: cardFade 2s linear infinite, r6 2s linear infinite; }
+
+  /* ---- Keyframes ---- */
+  @keyframes stackIn {
+    0%     { padding-top: 500px; --gap: -100px; animation-timing-function: cubic-bezier(.5,0,.5,1); }
+    55.45% { padding-top: 4px;   --gap: -10px; }
+    100%   { padding-top: 4px;   --gap: -10px; }
+  }
+  @keyframes cardFade {
+    0%    { opacity: .5; animation-timing-function: cubic-bezier(.5,0,.5,1); }
+    49.5% { opacity: 1; }
+    100%  { opacity: 1; }
+  }
+  @keyframes r1 { 0% { --r: 1deg; }    100% { --r: 1deg; } }
+  @keyframes r2 { 0% { --r: -1.5deg; animation-timing-function: cubic-bezier(.5,0,.5,1); } 100% { --r: 3.5deg; } }
+  @keyframes r3 { 0% { --r: 1deg;   animation-timing-function: cubic-bezier(.5,0,.5,1); } 100% { --r: -4deg; } }
+  @keyframes r4 { 0% { --r: -2deg;  animation-timing-function: cubic-bezier(.5,0,.5,1); } 100% { --r: 4deg; } }
+  @keyframes r5 { 0% { --r: 1.5deg; animation-timing-function: cubic-bezier(.5,0,.5,1); } 100% { --r: -6.5deg; } }
+  @keyframes r6 { 0% { --r: -1deg;  animation-timing-function: cubic-bezier(.5,0,.5,1); } 100% { --r: 8deg; } }
+
+  /* ---- Home indicator ---- */
+  .home-indicator {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .home-indicator .bar { width: 134px; height: 5px; border-radius: 12px; background: var(--ink); }
+
+  /* ---- Accessibility: respect reduced-motion (settle to the resting state) ---- */
+  @media (prefers-reduced-motion: reduce) {
+    .card-stack { animation: none; padding-top: 4px; --gap: -10px; }
+    .card { animation: none; opacity: 1; }
+  }
+</style>
+</head>
+<body>
+  <div class="phone">
+    <div class="scrolling-content">
+      <div class="status-bar"></div>
+
+      <div class="header">
+        <svg class="chevron" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M15 18L9 12L15 6" />
+        </svg>
+        <div class="title">관심 분야 선택</div>
+      </div>
+
+      <div class="sub-header">
+        <p class="desc">보고 싶은 분야의 카드를 골라주세요</p>
+        <a class="link" href="https://hankyung.com" target="_blank" rel="noopener">전체 지면 그대로 보기 →</a>
+      </div>
+
+      <div class="card-stack">
+        <div class="card-slot">
+          <div class="card c1">
+            <div class="card-tag"><span>국내 증시</span></div>
+            <div class="headline">코스피 2650 회복, 외국인 순매수 전환</div>
+            <div class="highlight"></div>
+          </div>
+        </div>
+        <div class="card-slot">
+          <div class="card c2">
+            <div class="card-tag"><span>해외 증시</span></div>
+            <div class="headline">뉴욕증시 사상 최고…나스닥 1.2%↑</div>
+            <div class="highlight"></div>
+          </div>
+        </div>
+        <div class="card-slot">
+          <div class="card c3">
+            <div class="card-tag"><span>부동산</span></div>
+            <div class="headline">서울 아파트 전세가율 반등, 실수요 유입</div>
+            <div class="highlight"></div>
+          </div>
+        </div>
+        <div class="card-slot">
+          <div class="card c4">
+            <div class="card-tag"><span>코인·가상자산</span></div>
+            <div class="headline">비트코인 9만 달러 재돌파</div>
+            <div class="highlight"></div>
+          </div>
+        </div>
+        <div class="card-slot">
+          <div class="card c5">
+            <div class="card-tag"><span>산업·IT</span></div>
+            <div class="headline">앤트로픽, 10월 IPO 추진…투자자 미팅</div>
+            <div class="highlight"></div>
+          </div>
+        </div>
+        <div class="card-slot">
+          <div class="card c6">
+            <div class="card-tag"><span>국제</span></div>
+            <div class="headline">美 FOMC 앞두고 환율 변동성 확대</div>
+            <div class="highlight"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="home-indicator"><div class="bar"></div></div>
+  </div>
+</body>
+</html>
